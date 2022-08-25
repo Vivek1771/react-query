@@ -4,7 +4,21 @@ import axios from 'axios'
 
 function User() {
 
-    const { isLoading, error, data } = useQuery(['fetchUser'], () => axios("https://jsonplaceholder.typicode.com/users"))
+    const placeholderUsers = { data: { data: [{ name: "Abcd", email: "fsdf@asd.dasdas" }, { name: "Abcd", email: "fsdf@asd.dasdas" }] } }
+
+    const { isLoading, error, data, refetch, isFetching } = useQuery(['fetchUser'], () => axios("https://jsonplaceholder.typicode.com/users"), {
+        placeholderData: placeholderUsers.data, refetchOnWindowFocus: false, cacheTime: 5000, enabled: false, onSuccess, onError,
+        // select: (data) => {
+        //     const website = data?.data?.map(user => user?.website)
+        //     return website
+        // }
+        // refetchInterval: 2000
+    })
+
+    function onSuccess(data) { console.log("success", data); }
+
+    function onError(error) { console.log("error", error); }
+
     const queryClient = useQueryClient()
 
     const AddUser = (newUser) => {
@@ -17,7 +31,8 @@ function User() {
 
 
     const mutation = useMutation(AddUser, {
-        onSuccess: () => {
+        onSuccess: (data) => {
+            console.log('data :', data);
             queryClient.invalidateQueries(['fetchUser'])
         },
     })
@@ -34,14 +49,16 @@ function User() {
         <>
             <div>User</div>
             <hr></hr>
-            {isLoading && <p>Loading...</p>}
+            {isLoading || isFetching && <p>Loading...</p>}
             {error && <p>Error: {error?.message}.</p>}
+            <button type='button' onClick={refetch}>Fetch users</button>
             {data?.data?.map(user =>
                 <>
                     <p><b>Name:</b> {user?.name}</p>
                     <p><b>Email:</b>  {user?.email}</p>
                 </>
             )}
+
 
             {mutation.isLoading ? (
                 'Adding User...'
